@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        div {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 5px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #progress {
+            margin-top: 20px;
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        #progress p {
+            margin: 0;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>File Downloader</h1>
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data">
+        <div>
+            <label for="file">Select Excel File:</label>
+            <input type="file" name="file" id="file" required>
+        </div>
+        <div>
+            <label for="column_name">Column Name:</label>
+            <input type="text" name="column_name" id="column_name" required>
+        </div>
+        <div>
+            <label for="output_path">Output Path:</label>
+            <input type="text" name="output_path" id="output_path" readonly required>
+            <button type="button" id="choose_directory" onclick="selectFolder()">Choose Output Directory</button>
+        </div>
+        <button type="submit">Start Download</button>
+    </form>
+    <div id="progress">
+        <p>Downloaded: <span id="downloaded">0</span></p>
+        <p>Failed: <span id="failed">0</span></p>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        var socket = io();
+
+        function selectFolder() {
+            fetch('/choose_directory')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.directory) {
+                        document.getElementById('output_path').value = data.directory;
+                    } else {
+                        console.log('No directory selected.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        socket.on('update', function(data) {
+            document.getElementById('downloaded').innerText = data.success || '0';
+            document.getElementById('failed').innerText = data.fail || '0';
+        });
+
+        socket.on('finished', function(data) {
+            alert(`Download completed! \nSuccessfully downloaded: ${data.success} \nFailed: ${data.fail}`);
+        });
+    </script>
+</body>
+</html>
